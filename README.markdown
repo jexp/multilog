@@ -1,7 +1,15 @@
+About
+=====
+
+A side-by-side logfile viewer that synchronizes on timestamps in logfiles.
+Useful for cluster setups or correlation between app-server and database logs.
+
+Can handle offset (in seconds) per logfile.
+
 Usage
 =====
 
-    ruby multilog.rb "date-pattern" logfile1 logfile2 logfile3
+    ruby multilog.rb "date-pattern" logfile1:timeoffset logfile2 logfile3
 
 Example
 =======

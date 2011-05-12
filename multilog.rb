@@ -5,7 +5,7 @@ require 'rubygems'
 require 'chronic'
 
 unless ARGV.size > 2
-  puts 'Usage  : ruby multilog.rb "date-pattern" logfile1 logfile2 logfile3'
+  puts 'Usage  : ruby multilog.rb "date-pattern" logfile1:timeoffset logfile2 logfile3'
   puts 'Example: ruby multilog.rb "Wed May 04 20:16:02 CEST 2011" `find neo4jlogs -name "messages.log"` | less'
   exit 
 end
@@ -33,7 +33,7 @@ end
 
 def next_output
   @min_date = Time.now.to_i
-  0.upto(@count-1).each do |i| 
+  (0..@count-1).each do |i| 
     index = (i+@file) % @count
     date = @dates[index]
     if date < @min_date
@@ -45,7 +45,7 @@ end
 
 def print
   curr_date = @dates[@file]
-  output = 0.upto(@count-1).collect { |i| @dates[i] == curr_date ? @lines[i]||"" : "" }.collect { |s| "%-#{@WIDTH}s |" % s[0..@WIDTH-1] }
+  output = (0..@count-1).collect { |i| @dates[i] == curr_date ? @lines[i]||"" : "" }.collect { |s| "%-#{@WIDTH}s |" % s[0..@WIDTH-1] }
   time = "%-30s |" % (curr_date > 0 ? Time.at(curr_date).to_s : "")
   puts  time + output.join
 end
@@ -56,10 +56,10 @@ end
 
 def advance
   curr_date = @dates[@file]
-  0.upto(@count-1).each do |i| 
+  (0..@count-1).each do |i| 
     if @dates[i] == curr_date
       @lines[i] = read_line(@files[i])
-      @dates[i] =log_date(i)
+      @dates[i] = log_date(i)
       @lines[i] = @lines[i][@SAMPLE.size..-1] if @dates[i]>0
     end
   end
