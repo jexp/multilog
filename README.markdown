@@ -4,7 +4,12 @@ About
 A side-by-side logfile viewer that synchronizes on timestamps in logfiles.
 Useful for cluster setups or correlation between app-server and database logs.
 
+Timestamps are removed from the logfile output and put in the first column to save
+width.
+
 Can handle offset (in seconds) per logfile.
+
+Uses "chronies" for date parsing, make sure to install that gem first.
 
 Usage
 =====

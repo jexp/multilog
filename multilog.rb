@@ -10,81 +10,113 @@ unless ARGV.size > 2
   exit 
 end
 
-@COLUMNS = 300
+class LogFile
+  attr_accessor :name, :file, :offset, :date, :line, :size
 
-@SAMPLE = ARGV.shift
-
-@names = ARGV
-@count = @names.size
-@WIDTH = @COLUMNS / @count
-
-
-def datestr(index)
-  @lines[index][0..@SAMPLE.size-1]
-end
-
-def log_date(index)
-  Chronic.parse(datestr(index)).to_i + @offsets[index]
-end
-
-def valid_date(index)
-  @dates[index] > 0
-end
-
-def next_output
-  @min_date = Time.now.to_i
-  (0..@count-1).each do |i| 
-    index = (i+@file) % @count
-    date = @dates[index]
-    if date < @min_date
-      @min_date = date
-      @file = index
+  def initialize(name,size)
+    @name = name
+    @size = size
+    @offset = 0
+    if name.include?(':')
+      (@name, @offset) = name.split(':')
+      @offset = @offset.to_i
     end
+    @file = File.open(@name)
+    @date = 0
+  end
+
+  def datestr(line)
+    line[0..@size-1]
+  end
+
+  def log_date(line)
+    return 0 if line.nil?
+    result = Chronic.parse(datestr(line)).to_i
+    result > 0 ? result + @offset : 0
+  end
+
+  def valid_date
+    @date > 0
+  end
+  
+  def close
+    @file.close
+  end
+
+  def eof?
+    line.nil?
+  end
+  
+  def read_line
+    result = @file.gets
+    result.nil? ? nil : result[0..-2].gsub(/\t/,"  ")
+  end
+
+  def remove_date(line)
+    line[@size..-1]
+  end
+  
+  def advance
+    line = read_line
+    @date = log_date(line)
+    @line = valid_date ? remove_date(line) : line
+  end
+  
+  def time_str
+    "%-30s |" % (valid_date ? Time.at(@date).to_s : "")
+  end
+  
+  def line_str
+    @line || ""
+  end
+
+  def show(do_show, width)
+    "%-#{width}s |" % (do_show ? line_str[0..width-1] : "")
+  end
+  def to_s
+    "#{@name} #{date}+#{@offset} : #{@line}"
   end
 end
 
-def print
-  curr_date = @dates[@file]
-  output = (0..@count-1).collect { |i| @dates[i] == curr_date ? @lines[i]||"" : "" }.collect { |s| "%-#{@WIDTH}s |" % s[0..@WIDTH-1] }
-  time = "%-30s |" % (curr_date > 0 ? Time.at(curr_date).to_s : "")
-  puts  time + output.join
+
+def next_log_entry_from
+  @files.min { |file1, file2| file1.date <=> file2.date }
 end
 
-def read_line(file)
-  file.gets[0..-2].gsub(/\t/,"  ")
+def print(current, width)
+  output = @files.collect { |file|  file.show(current.date == file.date, width) }
+  puts current.time_str + output.join
 end
 
-def advance
-  curr_date = @dates[@file]
-  (0..@count-1).each do |i| 
-    if @dates[i] == curr_date
-      @lines[i] = read_line(@files[i])
-      @dates[i] = log_date(i)
-      @lines[i] = @lines[i][@SAMPLE.size..-1] if @dates[i]>0
-    end
+
+def advance(current)
+  curr_date = current.nil? ? 0 : current.date 
+  @files.each do |file| 
+    file.advance if file.date == curr_date
   end
 end
 
-def print_and_advance
-  print
-  advance
-  @lines[@file].nil? || valid_date(@file)
+def print_and_advance(current, width)
+  print(current,width)
+  advance(current)
+  current.eof? || current.valid_date
 end
 
-@offsets = @names.collect { | name | name.split(':')[1].to_i || 0 }
-@names = @names.collect { | name | name.split(':')[0]  }
-@files = @names.collect { |name| File.open(name) }
-@lines = @names.collect { "" }
-@dates = @names.collect { 0 }
-@min_date = Time.now.to_i
-@file = 0
+COLUMNS = 300
 
-advance
+SAMPLE = ARGV.shift
 
-while true
-  next_output
-  {} until print_and_advance
+WIDTH = COLUMNS / ARGV.size
+
+@files = ARGV.collect { |name| LogFile.new(name, SAMPLE.size) }
+
+advance(nil)
+
+while @files.any? {|file| !file.eof? }
+  current = next_log_entry_from
+  {} until print_and_advance(current, WIDTH)
 end
+
 @files.each { |file| file.close }
 
 
