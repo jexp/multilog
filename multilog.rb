@@ -10,7 +10,7 @@ unless ARGV.size > 2
   exit 
 end
 
-@COLUMNS = 100
+@COLUMNS = 300
 
 @SAMPLE = ARGV.shift
 
@@ -24,7 +24,7 @@ def datestr(index)
 end
 
 def log_date(index)
-  Chronic.parse(datestr(index)).to_i
+  Chronic.parse(datestr(index)).to_i + @offsets[index]
 end
 
 def valid_date(index)
@@ -71,6 +71,8 @@ def print_and_advance
   @lines[@file].nil? || valid_date(@file)
 end
 
+@offsets = @names.collect { | name | name.split(':')[1].to_i || 0 }
+@names = @names.collect { | name | name.split(':')[0]  }
 @files = @names.collect { |name| File.open(name) }
 @lines = @names.collect { "" }
 @dates = @names.collect { 0 }
