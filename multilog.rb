@@ -1,20 +1,18 @@
-# usage ruby logview.rb 'Wed May 04 20:16:02 CEST 2011' `find neo4jlogs -name "messages.log"` | less
+# usage ruby multilog.rb 'Wed May 04 20:16:02 CEST 2011' `find neo4jlogs -name "messages.log"` | less
 # todo show the date just in the leftmost column and remove it from the log output
 
 require 'rubygems'
 require 'chronic'
 
 unless ARGV.size > 2
-  puts 'Usage  : ruby logview.rb "date-pattern" logfile1 logfile2 logfile3'
-  puts 'Example: ruby logview.rb "Wed May 04 20:16:02 CEST 2011" `find neo4jlogs -name "messages.log"` | less'
+  puts 'Usage  : ruby multilog.rb "date-pattern" logfile1 logfile2 logfile3'
+  puts 'Example: ruby multilog.rb "Wed May 04 20:16:02 CEST 2011" `find neo4jlogs -name "messages.log"` | less'
   exit 
 end
 
-@COLUMNS = 300
+@COLUMNS = 100
 
 @SAMPLE = ARGV.shift
-
-puts "sample #{@SAMPLE}"
 
 @names = ARGV
 @count = @names.size
