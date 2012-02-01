@@ -9,7 +9,7 @@ width.
 
 Can handle offset (in seconds) per logfile.
 
-Uses "chronies" for date parsing, make sure to install that gem first.
+Uses "chronic" for date parsing, make sure to install that gem first.
 
 Usage
 =====
